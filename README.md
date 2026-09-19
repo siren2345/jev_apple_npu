@@ -1,4 +1,4 @@
-# jev-coreml-systemone
+# jev_apple_npu
 
 macOS で動く、Core ML ベースのローカル型付き判定 API です。Jev の request / response 形式を参考に、`choice`、`score`、`noul` を返します。TypeSafe AI や Jev の公式実装ではありません。
 
