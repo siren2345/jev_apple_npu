@@ -1,0 +1,38 @@
+name: Bug report
+description: Report a reproducible problem with the local API or Core ML conversion.
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Include the request shape and the observed response or error. Remove private state before posting.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Create a Python 3.12 environment
+        2. Run ...
+        3. Send ...
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: macOS version
+      placeholder: "macOS 15.x"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Apple chip
+      placeholder: "M1, M2, M3, or M4"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Versions
+      description: Python, coremltools, torch, and transformers versions.
+    validations:
+      required: true

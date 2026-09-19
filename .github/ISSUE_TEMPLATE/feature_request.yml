@@ -1,0 +1,17 @@
+name: Feature request
+description: Propose an API, model, benchmark, or runtime improvement.
+title: "feature: "
+labels: [enhancement]
+body:
+  - type: textarea
+    attributes:
+      label: Problem
+      description: Describe the decision workflow and why the current API does not support it.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed behavior
+      description: Include an example state, question schema, and expected typed answer.
+    validations:
+      required: true

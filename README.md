@@ -13,6 +13,14 @@ macOS で動く、Core ML ベースのローカル型付き判定 API です。J
 
 詳細な調査と次の実装段階は [docs/research.md](docs/research.md) に記録しています。
 
+## 対象環境
+
+- Apple Silicon を搭載した macOS 15 以降
+- Python 3.12
+- Core ML Tools 9
+
+CI は macOS 上で API 契約と wheel ビルドを確認する。重みのダウンロードと Core ML 変換はローカル実行に限定する。
+
 ## 実行
 
 ```sh
