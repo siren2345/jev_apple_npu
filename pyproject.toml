@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "coreml-systemone"
+name = "jev-coreml-systemone"
 version = "0.1.0"
 description = "A local, Core ML-backed typed decision API for macOS"
 readme = "README.md"
