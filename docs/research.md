@@ -81,9 +81,9 @@ Core ML Tools は PyTorch の `torch.export` から ML Program への変換を�
 
 指定された Laya は、このプロジェクトが目指す利用体験の直接の参照になる。`state` と `questions` を一回の forward で受け、選択肢ごとの marker hidden state を decision head で採点して `choice` / `score` / `noul` を返す。日本語の二重請求・返金例はローカル `laya-multilingual` で正常に実行できた。
 
-ただし同 checkpoint は mmBERT/ModernBERT の attention mask 内で `aten.new_ones` や tensor-to-int 変換を使う。Core ML Tools 9 の PyTorch frontend では未対応で、Torch Export と TorchScript の両方で変換が停止した。Core ML 前提の製品版では、Laya の request/response、候補 marker head、temperature calibration、評価方法を採用し、Core ML 変換を最初に通せる標準 BERT 系 encoder へ置換する。
+その後、動的な attention mask と RoPE table を固定形状の定数に置き換えた encoder wrapper を作った。さらに汎用 `TransformerEncoderLayer` の2層 decision head を固定 Q/K/V・softmax・MLP graph に展開した。これにより encoder、decision head、scorer の3パッケージは `CPU_AND_NE` で実行できるようになった。
 
-これは性能上の後退を避けるための判断である。互換性のために CPU fallback を混ぜると、Core ML の compute unit に応じたレイテンシ・メモリ特性を評価できなくなる。
+Core ML Tools 9 は rank-3 整数 gather を誤って lower するため、marker hidden state の選択だけを NumPy の `take_along_axis` で行う。配列は既定で2×20×768に限られ、Transformer本体はすべてCore ML / ANE上にある。日本語の二重請求・返金例では元Layaとtop-1が一致し、最大logit誤差は0.165だった。
 
 ## 公開されている質問例
 
@@ -109,10 +109,10 @@ Core ML Tools は PyTorch の `torch.export` から ML Program への変換を�
 - https://gist.github.com/mikehostetler/2a3c779a83168ec4f2ddf02a2deace09
 # 実装更新: Core ML で使える最初の多言語ベースライン
 
-`convaiinnovations/laya-multilingual` は API とデータ形式の良い参照だが、同モデルの ModernBERT/mmBERT graph は Core ML Tools 9 の `aten.new_ones` とテンソルから Python `int` への変換で止まった。従って、Laya の checkpoint を無理に変換する方針は採らない。
+`convaiinnovations/laya-multilingual` は API とデータ形式の良い参照であり、固定形状の3分割 Core ML export によってその既存重みを使えるようになった。
 
 最初の実行可能な Core ML runtime には `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` を採用した。標準 BERT の 12-layer / 384 hidden encoder で、日本語を含む多言語の文類似度事前学習済みである。Transformer 5 の通常 forward は Core ML Tools 9 が下げられない `int` graph node を作るため、position id と token-type id を固定定数にした同値の BERT encoder path を `torch.export` で変換した。`torch.jit.trace` はこの経路では不適切だった。
 
 生成物は `artifacts/multilingual-minilm-b8-s128.mlpackage` と `artifacts/multilingual-minilm-b32-s128.mlpackage`。入力は `int32` の `input_ids` と `attention_mask`、出力は `last_hidden_state`。Python の `jev_coreml.load().predict()` は 8 文以内では小バッチを使い、超える場合にのみ32文バッチを lazy-load する。同じ state の質問と候補を詰めて Core ML 呼び出しを共有し、mean-pool したベクトルを cosine ranking して Jev の `choice` / `score` / `noul` 形へ整形する。
 
-これは使えるゼロショット基線であって、Jev の確率校正済み decision model ではない。特に yes/no と順序 score は対照例を含む学習・校正データが必要である。次段階では公開質問例を正規化し、Laya または Qwen の prefill 尤度を教師として Core ML 互換 BERT cross-encoder head を蒸留する。
+これは使えるゼロショット基線であって、Jev の確率校正済み decision model ではない。特に yes/no と順序 score は対照例を含む学習・校正データが必要である。Laya Core ML経路は、学習済みdecision headを使う高品質な代替として併存させる。
